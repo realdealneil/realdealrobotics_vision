@@ -87,10 +87,15 @@ cv2.line(drawImg, (int(bbx1), int(bby1)), (int(bbx1), int(bby2)),
 # Right line:
 cv2.line(drawImg, (int(bbx2), int(bby1)), (int(bbx2), int(bby2)),
 	(255, 0, 255), 2)
-	
-numGoodLines = 0;
 
 goodlines = [];
+
+minavgx = 10000;
+maxavgx = -10000;
+minavgy = 10000;
+maxavgy = -10000;
+
+#rightline = [];
 	
 # Okay, now we want to find the lines that best match the inside of the gate:
 for line in lines:
@@ -132,74 +137,47 @@ for line in lines:
 		continue
 		
 	print("Found a good line, length: ", llen)
-	numGoodLines = numGoodLines + 1
-		
-	# Draw this line:
-	cv2.line(drawImg, (int(l[0]), int(l[1])), (int(l[2]), int(l[3])),
-		(255, 255, 0), 4)	
+	goodlines.append(l);
 	
-print("Found %s good lines out of %s total" % (numGoodLines, len(lines)))
+	cv2.line(drawImg, (int(l[0]), int(l[1])), (int(l[2]), int(l[3])),
+		(255, 255, 0), 1)	
+	
+	avgx = (l[0] + l[2])/2;
+	avgy = (l[1] + l[3])/2;	
+	
+	if (avgx > maxavgx):
+		maxavgx = avgx;
+		rightline = l;
+	if (avgx < minavgx):
+		minavgx = avgx
+		leftline = l;
+	if (avgy > maxavgy):
+		maxavgy = avgy;
+		bottomline = l;
+	if (avgy < minavgy):
+		minavgy = avgy;
+		topline = l;
+
+print("Found %s good lines out of %s total" % (len(goodlines), len(lines)))
+
+# Draw top line
+cv2.line(drawImg, (int(topline[0]), int(topline[1])), (int(topline[2]), int(topline[3])),
+	(0, 255, 255), 4)
+cv2.line(drawImg, (int(bottomline[0]), int(bottomline[1])), (int(bottomline[2]), int(bottomline[3])),
+	(0, 255, 255), 4)
+cv2.line(drawImg, (int(rightline[0]), int(rightline[1])), (int(rightline[2]), int(rightline[3])),
+	(0, 255, 255), 4)
+cv2.line(drawImg, (int(leftline[0]), int(leftline[1])), (int(leftline[2]), int(leftline[3])),
+	(0, 255, 255), 4)
+
+
+
+# Go through good lines, find outermost lines, and select them.  
+#for line in goodlines:
+#	# Draw this line:
+#	cv2.line(drawImg, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])),
+#		(0, 0, 128), 4)	
 
 cv2.imshow("Line Segments", drawImg)
 cv2.imwrite("output.jpg", drawImg);
 cv2.waitKey(0)
-
-
-#for l in lines:
-	
-
-# # Find Contours in the edge image:
-# cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-# cnts = imutils.grab_contours(cnts)
-# print("Number of contours found: ", len(cnts) )
-
-# # Sort the contours from left to right and initialize the 'pixels per meter' calibration
-# (cnts, _) = contours.sort_contours(cnts)
-# pixelsPerMeter = None
-
-# # Loop over the contours individually:
-# for c in cnts:
-    # # If the contour is not very big, ignore it:
-    # if cv2.contourArea(c) < 100:
-        # continue
-    
-    # # Compute the rotated bounding box of the contour:
-    # orig = drawImg.copy()
-    # box = cv2.minAreaRect(c)
-    # box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
-    # box = np.array(box, dtype="int")
-    
-    # # Order the points in the contour such that they appear in to-left, top-right, bottom-right,
-    # # bottom-left order.  Then, draw the outline of the rotated bounding box:
-    # box = perspective.order_points(box)
-    # cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 2)
-    
-    # # loop over the original points and draw them:
-    # for (x,y) in box:
-        # cv2.circle(orig, (int(x), int(y)), 5, (0, 0, 255), -1)
-        
-    # # unpack the ordered bounding box, then compute the midpoint
-    # # between top-left and top-right coordinates, followed by
-    # # the midpoint between bottom-left and bottom-right coordinates:
-    # (tl, tr, br, bl) = box
-    # (tltrX, tltrY) = midpoint(tl, tr)
-    # (blbrX, blbrY) = midpoint(bl, br)
-    
-    # # Compute the remaining midpoints:
-    # (tlblX, tlblY) = midpoint(tl, bl)
-    # (trbrX, trbrY) = midpoint(tr, br)
-    
-    # # draw the midpoints on the image:
-    # cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255,0,0), -1)
-    # cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255,0,0), -1)
-    # cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255,0,0), -1)
-    # cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255,0,0), -1)   
-        
-    
-
-    # cv2.imshow("Image", orig);
-    # #cv2.imshow("Edges", edged);
-    # cv2.waitKey(0)
-	
-
-	
