@@ -25,6 +25,24 @@ def lineLength(l):
 	dx = l[2]-l[0]
 	dy = l[3]-l[1]
 	return np.sqrt(dx*dx + dy*dy)
+	
+def intersection(l1, l2):
+	# See https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+	# Intersection given two points on each line:
+	x1 = l1[0]
+	y1 = l1[1]
+	x2 = l1[2]
+	y2 = l1[3]
+	x3 = l2[0]
+	y3 = l2[1]
+	x4 = l2[2]
+	y4 = l2[3]
+	denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
+	t_num = (x1-x3)*(y3-y4) - (y1-y3)*(x3-x4)
+	t = t_num/denom
+	xi = x1 + t*(x2-x1)
+	yi = y1 + t*(y2-y1)
+	return (xi, yi)
     
 # contrcut the argument parse and parse args:
 ap = argparse.ArgumentParser()
@@ -169,6 +187,16 @@ cv2.line(drawImg, (int(rightline[0]), int(rightline[1])), (int(rightline[2]), in
 	(0, 255, 255), 4)
 cv2.line(drawImg, (int(leftline[0]), int(leftline[1])), (int(leftline[2]), int(leftline[3])),
 	(0, 255, 255), 4)
+	
+p_ul = intersection(topline, leftline)
+p_ur = intersection(topline, rightline)
+p_ll = intersection(bottomline, leftline)
+p_lr = intersection(bottomline, rightline)
+
+cv2.circle(drawImg, p_ul, 3, (255, 0, 0), 4)
+cv2.circle(drawImg, p_ur, 3, (255, 0, 0), 4)
+cv2.circle(drawImg, p_ll, 3, (255, 0, 0), 4)
+cv2.circle(drawImg, p_lr, 3, (255, 0, 0), 4)
 
 
 
