@@ -5,9 +5,6 @@ import numpy as np
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-i','--image', required=True, help='path to input image')
-ap.add_argument('-c','--config', required=True, help='path to yolo config file')
-ap.add_argument('-w', '--weights', required=True, help='path to weights file')
-ap.add_argument('-cl', '--classes', required=True, help='path to class list')
 args = ap.parse_args()
 
 # Read in the image:
@@ -19,14 +16,14 @@ scale = 0.00392 # ????
 
 # read class name from text file:
 classes = None
-with open(args.classes, 'r') as f:
+with open('config/alphapilot.names', 'r') as f:
 	classes = [line.strip() for line in f.readlines()]
 	
 # generate different colors for different classes
 COLORS = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # read pre-trained model and config file:
-net = cv2.dnn.readNet(args.weights, args.config)
+net = cv2.dnn.readNet('config/yolo-alphapilot_9700.weights', 'config/yolo-alphapilot.cfg')
 
 # create input blob
 blob = cv2.dnn.blobFromImage(image, scale, (416, 416), (0,0,0), True, crop=False)
