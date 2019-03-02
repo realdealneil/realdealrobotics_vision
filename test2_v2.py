@@ -118,17 +118,35 @@ class yoloFinder:
 
 # Load a file, do yolo detections on it:
 ap = argparse.ArgumentParser()
-ap.add_argument('-i','--image', required=True, help='path to input image')
+ap.add_argument('-f','--filelist', help="path to file list")
+ap.add_argument('-i','--image', help='path to input image')
 args = ap.parse_args()
+
+fullfiles = []
+
+if args.filelist is not None:
+    filelist = args.filelist
+    with open(filelist) as f:
+        fullfiles = f.readlines()
+        fullfiles = [x.strip() for x in fullfiles]
+elif args.image is not None:
+    fullfiles.append(args.image)
+else:
+    print("Error: You must specify a file or list of files")
+    exit()
 
 # Initialize the yolo finder:
 Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'config/yolo-alphapilot_9700.weights')
 
-# Read in the image:
-image = cv2.imread(args.image)
+for imgFile in fullfiles:    
 
-(indices, classes, conf, boxes) = Yolo.detect(image)
-Yolo.drawDetections(indices, classes, conf, boxes, image)
+    # Read in the image:
+    image = cv2.imread(imgFile)
+    
+    # Do yolo detection:
+    (indices, classes, conf, boxes) = Yolo.detect(image)
+    Yolo.drawDetections(indices, classes, conf, boxes, image)
 
-cv2.imshow("yolo detection", image)
-cv2.waitKey()
+    # Show image with yolo detections:
+    cv2.imshow("yolo detection", image)
+    cv2.waitKey()
