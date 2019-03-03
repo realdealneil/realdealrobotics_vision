@@ -23,7 +23,7 @@ with open('config/alphapilot.names', 'r') as f:
 COLORS = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # read pre-trained model and config file:
-net = cv2.dnn.readNet('config/yolo-alphapilot_9700.weights', 'config/yolo-alphapilot.cfg')
+net = cv2.dnn.readNet('config/yolo-alphapilot_5classes_15700.weights', 'config/yolo-alphapilot.cfg')
 
 # create input blob
 blob = cv2.dnn.blobFromImage(image, scale, (416, 416), (0,0,0), True, crop=False)

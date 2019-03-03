@@ -1,1 +1,2 @@
 yolo-alphapilot_9700.weights filter=lfs diff=lfs merge=lfs -text
+yolo-alphapilot_5classes_15700.weights filter=lfs diff=lfs merge=lfs -text
