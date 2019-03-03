@@ -31,7 +31,7 @@ class yoloFinder:
     # function to draw bounding boxes on the detected object with class name:
     def draw_bounding_box(self, img, class_id, confidence, x, y, x_plus_w, y_plus_h):
         label = str(self.classes[class_id])
-        color = (0,255,0) #self.COLORS[class_id]
+        color = self.COLORS[class_id]
         cv2.rectangle(img, (x,y), (x_plus_w,y_plus_h), color, 2)
         cv2.putText(img, label, (x-10,y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
         
@@ -87,6 +87,108 @@ class yoloFinder:
             h = box[3]
             
             self.draw_bounding_box(image, class_ids[i], confidences[i], round(x), round(y), round(x+w), round(y+h))
+            
+    def getYoloInnerCornerEstimates(self, indices, class_ids, confidences, boxes, image):
+        # Go through the detections and find the estimates of the corner points:
+        p_ul_list = []
+        p_ur_list = []
+        p_ll_list = []
+        p_lr_list = []
+        
+        gate_box = None
+        
+        # First, find the center of the estimated gate (looking at the gate detection).         
+        for i in indices:
+            i=i[0]
+            if (class_ids[i] == 0):
+                gate_box = boxes[i]
+                
+        if gate_box is None:
+            return None
+            
+        # Now, if we have a gate box, find the center:
+        bbx = gate_box[0]
+        bby = gate_box[1]
+        bbw = gate_box[2]
+        bbh = gate_box[3]
+        
+        gate_center_x = bbx + bbw/2
+        gate_center_y = bby + bbh/2
+        
+        # Now, go through the rest of the classes, and regardless of their type, classify them into quadrant:
+        for i in indices:
+            i = i[0]
+            if class_ids[i] != 0:
+                box = boxes[i]
+                x = box[0]
+                y = box[1]
+                w = box[2]
+                h = box[3]
+                xc = x + w/2
+                yc = y + h/2
+                
+                if xc < gate_center_x and yc < gate_center_y:
+                    p_ul_list.append((xc, yc, class_ids[i]))
+                elif xc > gate_center_x and yc < gate_center_y:
+                    p_ur_list.append((xc, yc, class_ids[i]))
+                elif xc < gate_center_x and yc > gate_center_y:
+                    p_ll_list.append((xc, yc, class_ids[i]))
+                else:
+                    p_lr_list.append((xc, yc, class_ids[i]))
+        
+        # Now, report how many of each corner point are found:
+        print("Found - UL: %d, UR: %d, LL: %d, LR: %d" % (len(p_ul_list), len(p_ur_list), len(p_ll_list), len(p_lr_list))) 
+        
+        p_ul = None
+        p_ur = None
+        p_ll = None
+        p_lr = None
+        
+        c_ul = 1
+        c_ur = 2
+        c_ll = 3
+        c_lr = 4
+        
+        if len(p_ul_list) == 1:
+            p_ul = p_ul_list[0]
+        elif len(p_ul_list) > 1:
+            p_ul = p_ul_list[0]
+            for b in p_ul_list:
+                if b[2] == c_ul:
+                    p_ul = b
+        
+        if len(p_ur_list) == 1:
+            p_ur = p_ur_list[0]
+        elif len(p_ur_list) > 1:
+            p_ur = p_ur_list[0]
+            for b in p_ur_list:
+                if b[2] == c_ur:
+                    p_ur = b
+                    
+        if len(p_ll_list) == 1:
+            p_ll = p_ll_list[0]
+        elif len(p_ll_list) > 1:
+            p_ll = p_ll_list[0]
+            for b in p_ll_list:
+                if b[2] == c_ll:
+                    p_ll = b
+                    
+        if len(p_lr_list) == 1:
+            p_lr = p_lr_list[0]
+        elif len(p_lr_list) > 1:
+            p_lr = p_lr_list[0]
+            for b in p_lr_list:
+                if b[2] == c_lr:
+                    p_lr = b
+                    
+        if p_ul != None:
+            cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
+        if p_ur != None:
+            cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
+        if p_ll != None:
+            cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
+        if p_lr != None:
+            cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
 
 # Function for detecting the lines and corners 
 class lineExaminer:
@@ -339,8 +441,8 @@ else:
     exit()
 
 # Initialize the yolo finder:
-Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'config/yolo-alphapilot_9700.weights')
-lineFinder = lineExaminer();
+Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'config/yolo-alphapilot.weights')
+#lineFinder = lineExaminer();
 
 for imgFile in fullfiles:    
 
@@ -349,10 +451,13 @@ for imgFile in fullfiles:
     
     # Do yolo detection:
     (indices, classes, conf, boxes) = Yolo.detect(image)
-    #Yolo.drawDetections(indices, classes, conf, boxes, image)
+    Yolo.drawDetections(indices, classes, conf, boxes, image)
+    Yolo.getYoloInnerCornerEstimates(indices, classes, conf, boxes, image)
+    # Determine the four corner points using the centers of the minor boxes:
+    
     
     # Do line detection and look for the right edges/corners:
-    lineFinder.findLinesAndCorners(image, boxes)
+    #lineFinder.findLinesAndCorners(image, boxes)
 
     # Show image with yolo detections:
     cv2.imshow("yolo detection", image)
