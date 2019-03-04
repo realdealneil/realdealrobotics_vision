@@ -188,28 +188,28 @@ class yoloFinder:
                 if b[2] == c_lr:
                     p_lr = b
                 
-        # tempUL = None
-        # tempUR = None
-        # tempLL = None
-        # tempLR = None
+        tempUL = None
+        tempUR = None
+        tempLL = None
+        tempLR = None
         
-        # if (p_ul is None and p_ur is not None and p_ll is not None):
-            # tempUL = (p_ll[0], p_ur[1])
-        # if (p_ur is None and p_ul is not None and p_lr is not None):
-            # tempUR = (p_lr[0], p_ul[1])
-        # if (p_ll is None and p_ul is not None and p_lr is not None):
-            # tempLL = (p_ul[0], p_lr[1])
-        # if (p_lr is None and p_ur is not None and p_ll is not None):
-            # tempLR = (p_ur[0], p_ll[1])
+        if (p_ul is None and p_ur is not None and p_ll is not None):
+            tempUL = (p_ll[0], p_ur[1])
+        if (p_ur is None and p_ul is not None and p_lr is not None):
+            tempUR = (p_lr[0], p_ul[1])
+        if (p_ll is None and p_ul is not None and p_lr is not None):
+            tempLL = (p_ul[0], p_lr[1])
+        if (p_lr is None and p_ur is not None and p_ll is not None):
+            tempLR = (p_ur[0], p_ll[1])
             
-        # if tempUL is not None:
-            # p_ul = tempUL
-        # if tempUR is not None:
-            # p_ur = tempUR
-        # if tempLL is not None:
-            # p_ll = tempLL
-        # if tempLR is not None:
-            # p_lr = tempLR
+        if tempUL is not None:
+            p_ul = tempUL
+        if tempUR is not None:
+            p_ur = tempUR
+        if tempLL is not None:
+            p_ll = tempLL
+        if tempLR is not None:
+            p_lr = tempLR
                     
         if p_ul != None:
             cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
