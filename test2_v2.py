@@ -2,6 +2,13 @@ import cv2
 import argparse
 import numpy as np
 import os
+
+# From generate_results/submission:
+import json
+from pprint import pprint
+import glob
+#from generate_results import *
+import time
 	
 class yoloFinder:
     """ Find objects (alphapilot gates) using Yolo """
@@ -180,287 +187,97 @@ class yoloFinder:
             for b in p_lr_list:
                 if b[2] == c_lr:
                     p_lr = b
+                
+        # tempUL = None
+        # tempUR = None
+        # tempLL = None
+        # tempLR = None
+        
+        # if (p_ul is None and p_ur is not None and p_ll is not None):
+            # tempUL = (p_ll[0], p_ur[1])
+        # if (p_ur is None and p_ul is not None and p_lr is not None):
+            # tempUR = (p_lr[0], p_ul[1])
+        # if (p_ll is None and p_ul is not None and p_lr is not None):
+            # tempLL = (p_ul[0], p_lr[1])
+        # if (p_lr is None and p_ur is not None and p_ll is not None):
+            # tempLR = (p_ur[0], p_ll[1])
+            
+        # if tempUL is not None:
+            # p_ul = tempUL
+        # if tempUR is not None:
+            # p_ur = tempUR
+        # if tempLL is not None:
+            # p_ll = tempLL
+        # if tempLR is not None:
+            # p_lr = tempLR
                     
         if p_ul != None:
             cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
+        else:
+            p_ul = (-1, -1)
         if p_ur != None:
             cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
+        else:
+            p_ur = (-1, -1)
         if p_ll != None:
             cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
+        else:
+            p_ll = (-1, -1)
         if p_lr != None:
             cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
-
-# Function for detecting the lines and corners 
-class lineExaminer:
-    def __init__(self):
-        self.lsd = cv2.createLineSegmentDetector(0)
-        
-    def midpoint(self, line): 
-        return ((line[0] + line[2]) * 0.5, (line[1] + line[3]) * 0.5)
-    
-    def lineLength(self, l):
-        dx = l[2]-l[0]
-        dy = l[3]-l[1]
-        return np.sqrt(dx*dx + dy*dy)
-	
-    def intersection(self, l1, l2):
-        # See https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-        # Intersection given two points on each line:
-        x1 = l1[0]
-        y1 = l1[1]
-        x2 = l1[2]
-        y2 = l1[3]
-        x3 = l2[0]
-        y3 = l2[1]
-        x4 = l2[2]
-        y4 = l2[3]
-        denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
-        if abs(denom) < 1e-8:
-            return False;
-        t_num = (x1-x3)*(y3-y4) - (y1-y3)*(x3-x4)
-        t = t_num/denom
-        xi = x1 + t*(x2-x1)
-        yi = y1 + t*(y2-y1)
-        return (xi, yi)
-        
-    def findLinesAndCorners(self, image, boxes):
-        # Convert to grayscale and gaussian blur:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (7,7), 0)
-        
-        # Do edge detection and some quick dilate/erode stuff (may not be necessary)
-        edged = cv2.Canny(gray, 50, 100)
-        edged = cv2.dilate(edged, None, iterations=8)
-        edged = cv2.erode(edged, None, iterations=8)
-        
-        lines = self.lsd.detect(gray)[0]
-        #lineImg = self.lsd.drawSegments(image, lines)
-        
-        # How many boxes are there?  There should only be one, but handle the case that there are more:
-        #print("There are %s boxes" % len(boxes))
-        
-        # Just use the first box...assume it's good:
-        box = boxes[0]        
-        bbw = box[2]
-        bbh = box[3]
-        
-        bbx1 = box[0]
-        bby1 = box[1]
-        bbx2 = bbx1 + bbw
-        bby2 = bby1 + bbh
-        
-        label = "gate" #str(self.classes[class_id])
-        green = (0,255,0) #self.COLORS[class_id]
-        blue = (255,0,0)
-        red = (0,0,255)
-        
-        cv2.rectangle(image, (round(bbx1),round(bby1)), (round(bbx2),round(bby2)), green, 2)
-        
-        candidate_lines = [];
-        # Okay, now we want to find the lines that best match the inside of the gate:
-        for line in lines:
-            l = line[0]
-            xgood = False;
-            if (l[0] > bbx1) and (l[0] < bbx2) and (l[2] > bbx1) and (l[2] < bbx2):
-                xgood = True;
-            ygood = False;
-            if (l[1] > bby1) and (l[1] < bby2) and (l[3] > bby1) and (l[3] < bby2):
-                ygood = True;
-                
-            llen = self.lineLength(l)
-
-            if xgood and ygood and llen > 20:
-                candidate_lines.append(l)
-                cv2.line(image, (int(l[0]), int(l[1])), (int(l[2]), int(l[3])),
-                    (255, 255, 0), 1)	
-        
-        # Draw vertical lines at positions where we generally find the right vertical line centers:
-        perc1 = 0.075
-        perc2 = 0.35
-        v1x = bbx1 + perc1*bbw
-        v2x = bbx1 + perc2*bbw
-        v3x = bbx2 - perc2*bbw
-        v4x = bbx2 - perc1*bbw
-        cv2.line(image, (int(v1x), int(bby1)), (int(v1x), int(bby2)), blue, 2)
-        cv2.line(image, (int(v2x), int(bby1)), (int(v2x), int(bby2)), blue, 2)
-        cv2.line(image, (int(v3x), int(bby1)), (int(v3x), int(bby2)), blue, 2)
-        cv2.line(image, (int(v4x), int(bby1)), (int(v4x), int(bby2)), blue, 2)
-        
-        # Find all of the vertical line segments between v1x and v2x and between v3x and v4x:
-        good_vert_lines_left = [];
-        good_vert_lines_right = [];
-        
-        for l in candidate_lines:
-            # Sort into vertical and horizontal lines:
-            dx = np.absolute(l[2] - l[0]);
-            dy = np.absolute(l[3] - l[1]);
+        else:
+            p_lr = (-1, -1)
             
-            horizontal = False;
-            vertical = False;
-            if dx > 2*dy:
-                horizontal = True;
-            elif dy > 2*dx:
-                vertical = True;
-                
-            midp = self.midpoint(l)
-                
-            if (vertical and l[0] > v1x and l[0] < v2x): 
-                good_vert_lines_left.append(l)
-                cv2.line(image, (int(l[0]), int(l[1])), (int(l[2]), int(l[3])), red, 3)
-            elif (vertical and l[0] > v3x and l[0] < v4x):
-                good_vert_lines_right.append(l)
-                cv2.line(image, (int(l[0]), int(l[1])), (int(l[2]), int(l[3])), (255, 255, 0), 3)
-                
-            
-            
-            
-        
-        
-        # Find the lines inside the bounding box, and try to narrow down to the right ones:
-        # goodlines = [];
-        
-        # minavgx = 10000;
-        # maxavgx = -10000;
-        # minavgy = 10000;
-        # maxavgy = -10000;
-        
-        # topline = None
-        # bottomline = None
-        # leftline = None
-        # rightline = None
-        
-        # # Okay, now we want to find the lines that best match the inside of the gate:
-        # for line in lines:
-            # l = line[0]
-            # xgood = False;
-            # if (l[0] > bbx1) and (l[0] < bbx2) and (l[2] > bbx1) and (l[2] < bbx2):
-                # xgood = True;
-            # ygood = False;
-            # if (l[1] > bby1) and (l[1] < bby2) and (l[3] > bby1) and (l[3] < bby2):
-                # ygood = True;
-
-            # if not (xgood and ygood):
-                # continue
-                
-            # # Sort into vertical and horizontal lines:
-            # dx = np.absolute(l[2] - l[0]);
-            # dy = np.absolute(l[3] - l[1]);
-            
-            # horizontal = False;
-            # vertical = False;
-            # if dx > 2*dy:
-                # horizontal = True;
-            # elif dy > 2*dx:
-                # vertical = True;
-            # if not (horizontal or vertical):
-                # continue;
-                
-            # llen = self.lineLength(l)
-            # goodlength = False
-            # if horizontal:
-                # if llen > bbw*3/5 and llen < bbw*9/10:
-                    # goodlength = True
-                    
-            # if vertical:
-                # if llen > bbh*3/5 and llen < bbh*9/10:
-                    # goodlength = True
-            
-            # if not goodlength:
-                # continue
-                
-            # #print("Found a good line, length: ", llen)
-            # goodlines.append(l);
-            
-            # cv2.line(image, (int(l[0]), int(l[1])), (int(l[2]), int(l[3])),
-                # (255, 255, 0), 1)	
-            
-            # avgx = (l[0] + l[2])/2;
-            # avgy = (l[1] + l[3])/2;	
-            
-            # if (avgx > maxavgx):
-                # maxavgx = avgx;
-                # rightline = l;
-            # if (avgx < minavgx):
-                # minavgx = avgx
-                # leftline = l;
-            # if (avgy > maxavgy):
-                # maxavgy = avgy;
-                # bottomline = l;
-            # if (avgy < minavgy):
-                # minavgy = avgy;
-                # topline = l;
-                
-        # print("Found %s good lines out of %s total" % (len(goodlines), len(lines)))
-
-        # if topline is not None:
-            # cv2.line(image, (int(topline[0]), int(topline[1])), (int(topline[2]), int(topline[3])),
-                # (0, 255, 255), 4)
-        # if bottomline is not None:
-            # cv2.line(image, (int(bottomline[0]), int(bottomline[1])), (int(bottomline[2]), int(bottomline[3])),
-                # (0, 255, 255), 4)
-        # if leftline is not None:
-            # cv2.line(image, (int(leftline[0]), int(leftline[1])), (int(leftline[2]), int(leftline[3])),
-                # (0, 255, 255), 4)
-        # if rightline is not None:
-            # cv2.line(image, (int(rightline[0]), int(rightline[1])), (int(rightline[2]), int(rightline[3])),
-                # (0, 255, 255), 4)
-                
-        # if topline is not None and bottomline is not None and leftline is not None and rightline is not None:
-            # p_ul = self.intersection(topline, leftline)
-            # p_ur = self.intersection(topline, rightline)
-            # p_ll = self.intersection(bottomline, leftline)
-            # p_lr = self.intersection(bottomline, rightline)
-
-            # if p_ul != False:
-                # cv2.circle(image, p_ul, 3, (255, 0, 0), 4)
-            # if p_ur != False:
-                # cv2.circle(image, p_ur, 3, (255, 0, 0), 4)
-            # if p_ll != False:
-                # cv2.circle(image, p_ll, 3, (255, 0, 0), 4)
-            # if p_lr != False:
-                # cv2.circle(image, p_lr, 3, (255, 0, 0), 4)
+        bb = (p_ul[0], p_ul[1], p_ur[0], p_ur[1], p_lr[0], p_lr[1], p_ll[0], p_ll[1])
+        return bb
 
 
 # Load a file, do yolo detections on it:
 ap = argparse.ArgumentParser()
-ap.add_argument('-f','--filelist', help="path to file list")
-ap.add_argument('-i','--image', help='path to input image')
+#ap.add_argument('-f','--filelist', help="path to file list")
+ap.add_argument('-p','--path', help='path to folder with images in it')
+#ap.add_argument('-i','--image', help='path to input image')
 args = ap.parse_args()
 
 fullfiles = []
+path = 'testing/images/'
 
-if args.filelist is not None:
-    filelist = args.filelist
-    with open(filelist) as f:
-        fullfiles = f.readlines()
-        fullfiles = [x.strip() for x in fullfiles]
-elif args.image is not None:
-    fullfiles.append(args.image)
-else:
-    print("Error: You must specify a file or list of files")
-    exit()
+if args.path is not None:
+    path = args.path
+    
+img_file = glob.glob(path + '/*.JPG')
+img_keys = [img_i.split('/')[-1] for img_i in img_file]
+
 
 # Initialize the yolo finder:
 Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'config/yolo-alphapilot.weights')
 #lineFinder = lineExaminer();
 
-for imgFile in fullfiles:    
-
-    # Read in the image:
-    image = cv2.imread(imgFile)
+time_all = []
+pred_dict = {}
+for img_key in img_keys:
+    image = cv2.imread(path + img_key)
     
-    # Do yolo detection:
+    tic = time.monotonic()
     (indices, classes, conf, boxes) = Yolo.detect(image)
-    Yolo.drawDetections(indices, classes, conf, boxes, image)
-    Yolo.getYoloInnerCornerEstimates(indices, classes, conf, boxes, image)
-    # Determine the four corner points using the centers of the minor boxes:
+    corners = Yolo.getYoloInnerCornerEstimates(indices, classes, conf, boxes, image)
+    toc = time.monotonic()
+    pred_dict[img_key] = corners
+    time_all.append(toc-tic)
     
-    
-    # Do line detection and look for the right edges/corners:
-    #lineFinder.findLinesAndCorners(image, boxes)
-
-    # Show image with yolo detections:
     cv2.imshow("yolo detection", image)
-    key = cv2.waitKey()
+    key = cv2.waitKey(15)
     if key == 27:
         exit()
+        
+mean_time = np.mean(time_all)
+ci_time = 1.96*np.std(time_all)
+freq = np.round(1/mean_time, 2)
+
+print('95% confidence interval for inference time is {0:.2f} +/- {1:.4f}.'.format(mean_time,ci_time))
+print('Operating frequency from loading image to getting results is {0:.2f}.'.format(freq))
+
+with open('realdealrobotics_submission.json', 'w') as f:
+    json.dump(pred_dict, f)
+
+    
