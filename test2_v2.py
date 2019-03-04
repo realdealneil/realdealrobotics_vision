@@ -228,8 +228,8 @@ class yoloFinder:
         else:
             p_lr = (-1, -1)
             
-        bb = (p_ul[0], p_ul[1], p_ur[0], p_ur[1], p_lr[0], p_lr[1], p_ll[0], p_ll[1])
-        return bb
+        bb = np.array([[p_ul[0], p_ul[1], p_ur[0], p_ur[1], p_lr[0], p_lr[1], p_ll[0], p_ll[1], 0.5]])
+        return bb.tolist()
 
 
 # Load a file, do yolo detections on it:
@@ -255,7 +255,7 @@ Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'conf
 
 time_all = []
 pred_dict = {}
-for img_key in img_keys:
+for img_key in img_keys[0:5]:
     image = cv2.imread(path + img_key)
     
     tic = time.monotonic()
