@@ -255,7 +255,7 @@ Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'conf
 
 time_all = []
 pred_dict = {}
-for img_key in img_keys[0:5]:
+for img_key in img_keys:
     image = cv2.imread(path + img_key)
     
     tic = time.monotonic()
