@@ -204,13 +204,17 @@ class yoloFinder:
             
         if tempUL is not None:
             p_ul = tempUL
+            print("  Filling in UL!")
         if tempUR is not None:
             p_ur = tempUR
+            print("  Filling in UR!")
         if tempLL is not None:
             p_ll = tempLL
+            print("  Filling in LL!")
         if tempLR is not None:
             p_lr = tempLR
-                    
+            print("  Filling in LR!")
+        
         if p_ul != None:
             cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
         else:
