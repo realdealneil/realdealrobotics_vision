@@ -111,7 +111,9 @@ class yoloFinder:
                 gate_box = boxes[i]
                 
         if gate_box is None:
-            return None
+            bb = np.array([[]])
+            print("No Gate Detected!")
+            return bb.tolist()
             
         # Now, if we have a gate box, find the center:
         bbx = gate_box[0]
@@ -214,23 +216,34 @@ class yoloFinder:
         if tempLR is not None:
             p_lr = tempLR
             print("  Filling in LR!")
+            
+        imWidth = image.shape[1]
+        imHeight = image.shape[0]
+        xc = imWidth/2
+        yc = imHeight/2
         
         if p_ul != None:
             cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
         else:
-            p_ul = (-1, -1)
+            p_ul = (xc, yc)
         if p_ur != None:
             cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
         else:
-            p_ur = (-1, -1)
+            p_ur = (xc, yc)
         if p_ll != None:
             cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
         else:
-            p_ll = (-1, -1)
+            p_ll = (xc, yc)
         if p_lr != None:
             cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
         else:
-            p_lr = (-1, -1)
+            p_lr = (xc, yc)
+            
+        # Draw Lines connecting the points:
+        cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ur[0]), int(p_ur[1])), (0, 255, 255), 4)
+        cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ll[0]), int(p_ll[1])), (0, 255, 255), 4)
+        cv2.line(image, (int(p_ll[0]), int(p_ll[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
+        cv2.line(image, (int(p_ur[0]), int(p_ur[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
             
         bb = np.array([[p_ul[0], p_ul[1], p_ur[0], p_ur[1], p_lr[0], p_lr[1], p_ll[0], p_ll[1], 0.5]])
         return bb.tolist()
@@ -269,8 +282,10 @@ for img_key in img_keys:
     pred_dict[img_key] = corners
     time_all.append(toc-tic)
     
+    Yolo.drawDetections(indices, classes, conf, boxes, image)
+    
     cv2.imshow("yolo detection", image)
-    key = cv2.waitKey(15)
+    key = cv2.waitKey()
     if key == 27:
         exit()
         
