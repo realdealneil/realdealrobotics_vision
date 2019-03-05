@@ -285,7 +285,7 @@ for img_key in img_keys:
     Yolo.drawDetections(indices, classes, conf, boxes, image)
     
     cv2.imshow("yolo detection", image)
-    key = cv2.waitKey()
+    key = cv2.waitKey(15)
     if key == 27:
         exit()
         
