@@ -3,6 +3,10 @@ import argparse
 import numpy as np
 import os
 
+import sys
+print sys.executable
+print cv2.__version__
+
 # From generate_results/submission:
 import json
 from pprint import pprint
@@ -37,10 +41,18 @@ class yoloFinder:
         
     # function to draw bounding boxes on the detected object with class name:
     def draw_bounding_box(self, img, class_id, confidence, x, y, x_plus_w, y_plus_h):
+        print "img", img
+        print "class_id", class_id
+        print "confidence", confidence
+        print "x", x
+        print "y", y
+        print "x_plus_w", x_plus_w
+        print "y_plus_h", y_plus_h
         label = str(self.classes[class_id])
         color = self.COLORS[class_id]
-        cv2.rectangle(img, (x,y), (x_plus_w,y_plus_h), color, 2)
-        cv2.putText(img, label, (x-10,y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        # cv2.rectangle(img, (x,y), (x_plus_w,y_plus_h), color, 2)
+        cv2.rectangle(img, (int(x),int(y)), (int(x_plus_w),int(y_plus_h)), color, 2)
+        cv2.putText(img, label, (int(x-10),int(y-10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
         
     def detect(self, img):
         # The image should be an opencv image.  Store the width and height:
@@ -267,7 +279,7 @@ img_keys = [img_i.split('/')[-1] for img_i in img_file]
 
 
 # Initialize the yolo finder:
-Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'config/yolo-alphapilot.weights')
+Yolo = yoloFinder('config/alphapilot.names', 'config/yolo-alphapilot.cfg', 'config/yolo-alphapilot_5classes_15700.weights')
 #lineFinder = lineExaminer();
 
 time_all = []
@@ -275,12 +287,12 @@ pred_dict = {}
 for img_key in img_keys:
     image = cv2.imread(path + img_key)
     
-    tic = time.monotonic()
+    #tic = time.monotonic()
     (indices, classes, conf, boxes) = Yolo.detect(image)
     corners = Yolo.getYoloInnerCornerEstimates(indices, classes, conf, boxes, image)
-    toc = time.monotonic()
+    #toc = time.monotonic()
     pred_dict[img_key] = corners
-    time_all.append(toc-tic)
+    #time_all.append(toc-tic)
     
     Yolo.drawDetections(indices, classes, conf, boxes, image)
     
