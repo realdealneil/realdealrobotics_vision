@@ -10,7 +10,7 @@ from generate_results import *
 import time
 
 
-img_file = glob.glob('testing/images/*.JPG')
+img_file = glob.glob('../testing/images/*.JPG')
 img_keys = [img_i.split('/')[-1] for img_i in img_file]
 
 
@@ -21,13 +21,19 @@ finalDetector = GenerateFinalDetections()
 time_all = []
 pred_dict = {}
 for img_key in img_keys:
-    img =cv2.imread('testing/images/'+img_key)
-    img =cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img =cv2.imread('../testing/images/'+img_key)
+    #img =cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     tic = time.monotonic()
     bb_all = finalDetector.predict(img)
     toc = time.monotonic()
     pred_dict[img_key] = bb_all
     time_all.append(toc-tic)
+    
+    cv2.imshow("yolo detection", img)
+    key = cv2.waitKey(15)
+    if key == 27:
+        break
+    
 
 mean_time = np.mean(time_all)
 ci_time = 1.96*np.std(time_all)
