@@ -29,6 +29,7 @@ class GenerateFinalDetections():
         self.scale = 0.00392 # 
         self.conf_threshold = 0.5
         self.nms_threshold = 0.4
+        self.inspect = False;
         
     def get_output_layers(self):
         layer_names = self.net.getLayerNames()
@@ -103,51 +104,20 @@ class GenerateFinalDetections():
         p_lr_list = []
         
         gate_box = None
+        num_gate_detects = 0
+        corner_detects = 0
+        myconf = 0.5
         
         # First, find the center of the estimated gate (looking at the gate detection).         
         for i in indices:
             i=i[0]
             if (class_ids[i] == 0):
                 gate_box = boxes[i]
+                num_gate_detects = num_gate_detects + 1
+                myconf = confidences[i]
+            else:
+                corner_detects = corner_detects + 1
                 
-        if gate_box is None:
-            bb = np.array([[]])
-            print("No Gate Detected!")
-            return bb
-            
-        # Now, if we have a gate box, find the center:
-        bbx = gate_box[0]
-        bby = gate_box[1]
-        bbw = gate_box[2]
-        bbh = gate_box[3]
-        
-        gate_center_x = bbx + bbw/2
-        gate_center_y = bby + bbh/2
-        
-        # Now, go through the rest of the classes, and regardless of their type, classify them into quadrant:
-        for i in indices:
-            i = i[0]
-            if class_ids[i] != 0:
-                box = boxes[i]
-                x = box[0]
-                y = box[1]
-                w = box[2]
-                h = box[3]
-                xc = x + w/2
-                yc = y + h/2
-                
-                if xc < gate_center_x and yc < gate_center_y:
-                    p_ul_list.append((xc, yc, class_ids[i]))
-                elif xc > gate_center_x and yc < gate_center_y:
-                    p_ur_list.append((xc, yc, class_ids[i]))
-                elif xc < gate_center_x and yc > gate_center_y:
-                    p_ll_list.append((xc, yc, class_ids[i]))
-                else:
-                    p_lr_list.append((xc, yc, class_ids[i]))
-        
-        # Now, report how many of each corner point are found:
-        print("Found - UL: %d, UR: %d, LL: %d, LR: %d" % (len(p_ul_list), len(p_ur_list), len(p_ll_list), len(p_lr_list))) 
-        
         p_ul = None
         p_ur = None
         p_ll = None
@@ -157,87 +127,169 @@ class GenerateFinalDetections():
         c_ur = 2
         c_ll = 3
         c_lr = 4
-        
-        if len(p_ul_list) == 1:
-            p_ul = p_ul_list[0]
-        elif len(p_ul_list) > 1:
-            p_ul = p_ul_list[0]
-            for b in p_ul_list:
-                if b[2] == c_ul:
-                    p_ul = b
-        
-        if len(p_ur_list) == 1:
-            p_ur = p_ur_list[0]
-        elif len(p_ur_list) > 1:
-            p_ur = p_ur_list[0]
-            for b in p_ur_list:
-                if b[2] == c_ur:
-                    p_ur = b
-                    
-        if len(p_ll_list) == 1:
-            p_ll = p_ll_list[0]
-        elif len(p_ll_list) > 1:
-            p_ll = p_ll_list[0]
-            for b in p_ll_list:
-                if b[2] == c_ll:
-                    p_ll = b
-                    
-        if len(p_lr_list) == 1:
-            p_lr = p_lr_list[0]
-        elif len(p_lr_list) > 1:
-            p_lr = p_lr_list[0]
-            for b in p_lr_list:
-                if b[2] == c_lr:
-                    p_lr = b
                 
-        tempUL = None
-        tempUR = None
-        tempLL = None
-        tempLR = None
-        
-        if (p_ul is None and p_ur is not None and p_ll is not None):
-            tempUL = (p_ll[0], p_ur[1])
-        if (p_ur is None and p_ul is not None and p_lr is not None):
-            tempUR = (p_lr[0], p_ul[1])
-        if (p_ll is None and p_ul is not None and p_lr is not None):
-            tempLL = (p_ul[0], p_lr[1])
-        if (p_lr is None and p_ur is not None and p_ll is not None):
-            tempLR = (p_ur[0], p_ll[1])
+        if gate_box is None:
+            self.inspect = True
+            bb = np.array([[]])
+            print("  No Detections at all!")
+            return bb
+            # if (corner_detects == 0):
+                # bb = np.array([[]])
+                # print("  No Detections at all!")
+                # return bb
+            # elif corner_detects == 1:
+                # # We only have one corner...just guess the width and height and build a pseudo-box around it:
+                # for i in indices:
+                    # i = i[0]
+                    # if class_ids[i] != 0:
+                        # box = boxes[i]
+                        # x = box[0]
+                        # y = box[1]
+                        # w = box[2]
+                        # h = box[3]
+                        # xc = x + w/2
+                        # yc = y + h/2
+                        # if (class_ids[i] == c_ul): # UL:
+                            # p_ul = (xc, yc)
+                            # p_ur = (xc+3*w,yc)
+                            # p_ll = (xc, yc+3*h)
+                            # p_lr = (xc+3*w, yc+3*h)
+                        # elif (class_ids[i] == c_ur): # UR:
+                            # p_ur = (xc, yc)
+                            # p_ul = (xc-3*w, yc)
+                            # p_lr = (xc, yc+3*h)
+                            # p_ll = (xc-3*w, yc+3*h)
+                        # elif (class_ids[i] == c_ll): # LL:
+                            # p_ll = (xc, yc)
+                            # p_ul = (xc, yc-3*h)
+                            # p_lr = (xc+3*w, yc)
+                            # p_ur = (xc+3*w, yc-3*h)
+                        # elif (class_ids[i] == c_lr): # LR
+                            # p_lr = (xc, yc)
+                            # p_ll = (xc-3*w, yc)
+                            # p_ur = (xc, yc-3*h)
+                            # p_ul = (xc-3*w, yc-3*h)   
+            # else:
+                # # go through the detections we do have...based on the centers of the boxes, define min and max x/y
+                # # if minx=maxx, use logic like above to extrapolate a box.  Same if miny=maxy.  Otherwise, use min and max to construct the box.  
+                
+        else:
             
-        if tempUL is not None:
-            p_ul = tempUL
-            print("  Filling in UL!")
-        if tempUR is not None:
-            p_ur = tempUR
-            print("  Filling in UR!")
-        if tempLL is not None:
-            p_ll = tempLL
-            print("  Filling in LL!")
-        if tempLR is not None:
-            p_lr = tempLR
-            print("  Filling in LR!")
+            # Now, if we have a gate box, find the center:
+            bbx = gate_box[0]
+            bby = gate_box[1]
+            bbw = gate_box[2]
+            bbh = gate_box[3]
             
-        imWidth = image.shape[1]
-        imHeight = image.shape[0]
-        xc = imWidth/2
-        yc = imHeight/2
+            gate_center_x = bbx + bbw/2
+            gate_center_y = bby + bbh/2
+            
+            # Now, go through the rest of the classes, and regardless of their type, classify them into quadrant:
+            for i in indices:
+                i = i[0]
+                if class_ids[i] != 0:
+                    box = boxes[i]
+                    x = box[0]
+                    y = box[1]
+                    w = box[2]
+                    h = box[3]
+                    xc = x + w/2
+                    yc = y + h/2
+                    
+                    if xc < gate_center_x and yc < gate_center_y:
+                        p_ul_list.append((xc, yc, class_ids[i]))
+                    elif xc > gate_center_x and yc < gate_center_y:
+                        p_ur_list.append((xc, yc, class_ids[i]))
+                    elif xc < gate_center_x and yc > gate_center_y:
+                        p_ll_list.append((xc, yc, class_ids[i]))
+                    else:
+                        p_lr_list.append((xc, yc, class_ids[i]))
+            
+            # Now, report how many of each corner point are found:
+            print("  Found - UL: %d, UR: %d, LL: %d, LR: %d" % (len(p_ul_list), len(p_ur_list), len(p_ll_list), len(p_lr_list))) 
+            
+            
+            
+            if len(p_ul_list) == 1:
+                p_ul = p_ul_list[0]
+            elif len(p_ul_list) > 1:
+                p_ul = p_ul_list[0]
+                for b in p_ul_list:
+                    if b[2] == c_ul:
+                        p_ul = b
+            
+            if len(p_ur_list) == 1:
+                p_ur = p_ur_list[0]
+            elif len(p_ur_list) > 1:
+                p_ur = p_ur_list[0]
+                for b in p_ur_list:
+                    if b[2] == c_ur:
+                        p_ur = b
+                        
+            if len(p_ll_list) == 1:
+                p_ll = p_ll_list[0]
+            elif len(p_ll_list) > 1:
+                p_ll = p_ll_list[0]
+                for b in p_ll_list:
+                    if b[2] == c_ll:
+                        p_ll = b
+                        
+            if len(p_lr_list) == 1:
+                p_lr = p_lr_list[0]
+            elif len(p_lr_list) > 1:
+                p_lr = p_lr_list[0]
+                for b in p_lr_list:
+                    if b[2] == c_lr:
+                        p_lr = b
+                    
+            tempUL = None
+            tempUR = None
+            tempLL = None
+            tempLR = None
+            
+            if (p_ul is None and p_ur is not None and p_ll is not None):
+                tempUL = (p_ll[0], p_ur[1])
+            if (p_ur is None and p_ul is not None and p_lr is not None):
+                tempUR = (p_lr[0], p_ul[1])
+            if (p_ll is None and p_ul is not None and p_lr is not None):
+                tempLL = (p_ul[0], p_lr[1])
+            if (p_lr is None and p_ur is not None and p_ll is not None):
+                tempLR = (p_ur[0], p_ll[1])
+                
+            if tempUL is not None:
+                p_ul = tempUL
+                print("  Filling in UL!")
+            if tempUR is not None:
+                p_ur = tempUR
+                print("  Filling in UR!")
+            if tempLL is not None:
+                p_ll = tempLL
+                print("  Filling in LL!")
+            if tempLR is not None:
+                p_lr = tempLR
+                print("  Filling in LR!")
+            
+        #imWidth = image.shape[1]
+        #imHeight = image.shape[0]
+        #xc = imWidth/2
+        #yc = imHeight/2
         
         if p_ul != None:
             cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
         else:
-            p_ul = (xc, yc)
+            p_ul = (gate_center_x, gate_center_y)
         if p_ur != None:
             cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
         else:
-            p_ur = (xc, yc)
+            p_ur = (gate_center_x, gate_center_y)
         if p_ll != None:
             cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
         else:
-            p_ll = (xc, yc)
+            p_ll = (gate_center_x, gate_center_y)
         if p_lr != None:
             cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
         else:
-            p_lr = (xc, yc)
+            p_lr = (gate_center_x, gate_center_y)
             
         # Draw Lines connecting the points:
         cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ur[0]), int(p_ur[1])), (0, 255, 255), 4)
@@ -245,7 +297,9 @@ class GenerateFinalDetections():
         cv2.line(image, (int(p_ll[0]), int(p_ll[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
         cv2.line(image, (int(p_ur[0]), int(p_ur[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
             
-        bb = np.array([[p_ul[0], p_ul[1], p_ur[0], p_ur[1], p_lr[0], p_lr[1], p_ll[0], p_ll[1], 0.5]])
+        myconf = max(myconf, 0.5)
+        print("    Confidence: %s" % myconf)
+        bb = np.array([[p_ul[0], p_ul[1], p_ur[0], p_ur[1], p_lr[0], p_lr[1], p_ll[0], p_ll[1], myconf]])
         return bb
         
     def predict(self,image):
