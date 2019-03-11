@@ -401,16 +401,16 @@ class GenerateFinalDetections():
         if p_lr is None:
             p_lr = (gate_center_x, gate_center_y)
         
-        cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
-        cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
-        cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
-        cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
+        # cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
+        # cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
+        # cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
+        # cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
             
-        # Draw Lines connecting the points:
-        cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ur[0]), int(p_ur[1])), (0, 255, 255), 4)
-        cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ll[0]), int(p_ll[1])), (0, 255, 255), 4)
-        cv2.line(image, (int(p_ll[0]), int(p_ll[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
-        cv2.line(image, (int(p_ur[0]), int(p_ur[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
+        # # Draw Lines connecting the points:
+        # cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ur[0]), int(p_ur[1])), (0, 255, 255), 4)
+        # cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ll[0]), int(p_ll[1])), (0, 255, 255), 4)
+        # cv2.line(image, (int(p_ll[0]), int(p_ll[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
+        # cv2.line(image, (int(p_ur[0]), int(p_ur[1])), (int(p_lr[0]), int(p_lr[1])), (0, 255, 255), 4)
             
         myconf = max(myconf, 0.5)
         print("    Confidence: %s" % myconf)
@@ -421,6 +421,6 @@ class GenerateFinalDetections():
         (indices, classes, conf, boxes) = self.detect(image)
         corners = self.getYoloInnerCornerEstimates(indices, classes, conf, boxes, image)
         # Comment this out in the actual runs?
-        self.drawDetections(indices, classes, conf, boxes, image)
+        #self.drawDetections(indices, classes, conf, boxes, image)
         return corners.tolist()
         

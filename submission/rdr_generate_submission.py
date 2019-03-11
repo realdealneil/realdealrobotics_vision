@@ -47,6 +47,7 @@ time_all = []
 pred_dict = {}
 c = 0
 saveImages = 0
+showImages = 0
 #output_path = "../images_out/"
 for img_key in img_keys:
 	img =cv2.imread(path + '/' + img_key)
@@ -59,18 +60,19 @@ for img_key in img_keys:
 	time_all.append(toc-tic)
 
 	c = c + 1
-
-	cv2.imshow("yolo detection", img)
+	
 	#if saveImages:
 	#	cv2.imwrite(output_path + "out_" + img_key, img)
-	if (finalDetector.inspect):
-		#key = cv2.waitKey(0)
-		key = cv2.waitKey(15)
-		finalDetector.inspect = False
-	else:
-		key = cv2.waitKey(15)
-	if key == 27:
-		break
+	if showImages:
+		cv2.imshow("yolo detection", img)
+		if (finalDetector.inspect):
+			#key = cv2.waitKey(0)
+			key = cv2.waitKey(15)
+			finalDetector.inspect = False
+		else:
+			key = cv2.waitKey(15)
+		if key == 27:
+			break
     
 
 mean_time = np.mean(time_all)
