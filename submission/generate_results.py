@@ -256,7 +256,8 @@ class GenerateFinalDetections():
             tempLL = None
             tempLR = None
             
-            if num_corners_found == 3:            
+            if num_corners_found == 3:       
+                myconf = 0.85     
                 if (p_ul is None and p_ur is not None and p_ll is not None):
                     tempUL = (p_ll[0], p_ur[1])
                 if (p_ur is None and p_ul is not None and p_lr is not None):
@@ -266,6 +267,7 @@ class GenerateFinalDetections():
                 if (p_lr is None and p_ur is not None and p_ll is not None):
                     tempLR = (p_ur[0], p_ll[1])
             elif num_corners_found == 2:
+                myconf = 0.75
                 # Are the diagonal, horizontal, or vertical?
                 xmin = 10000
                 xmax = -1
@@ -350,6 +352,7 @@ class GenerateFinalDetections():
             elif num_corners_found == 1:
                 # Predict a box centered in the overall gate area:
                 self.inspect = True
+                myconf = 0.6
                 if p_ul is not None:
                     print("Single corner found: Upper left")
                     p_ur = (p_ul[0] + 2*(gate_center_x - p_ul[0]), p_ul[1])
