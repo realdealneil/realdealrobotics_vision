@@ -208,36 +208,45 @@ class GenerateFinalDetections():
             # Now, report how many of each corner point are found:
             print("  Found - UL: %d, UR: %d, LL: %d, LR: %d" % (len(p_ul_list), len(p_ur_list), len(p_ll_list), len(p_lr_list))) 
             
-            
+            num_corners_found = 0
             
             if len(p_ul_list) == 1:
                 p_ul = p_ul_list[0]
+                num_corners_found = num_corners_found + 1
             elif len(p_ul_list) > 1:
                 p_ul = p_ul_list[0]
+                num_corners_found = num_corners_found + 1
                 for b in p_ul_list:
                     if b[2] == c_ul:
                         p_ul = b
+                        
             
             if len(p_ur_list) == 1:
                 p_ur = p_ur_list[0]
+                num_corners_found = num_corners_found + 1
             elif len(p_ur_list) > 1:
                 p_ur = p_ur_list[0]
+                num_corners_found = num_corners_found + 1
                 for b in p_ur_list:
                     if b[2] == c_ur:
                         p_ur = b
                         
             if len(p_ll_list) == 1:
                 p_ll = p_ll_list[0]
+                num_corners_found = num_corners_found + 1
             elif len(p_ll_list) > 1:
                 p_ll = p_ll_list[0]
+                num_corners_found = num_corners_found + 1
                 for b in p_ll_list:
                     if b[2] == c_ll:
                         p_ll = b
                         
             if len(p_lr_list) == 1:
                 p_lr = p_lr_list[0]
+                num_corners_found = num_corners_found + 1
             elif len(p_lr_list) > 1:
                 p_lr = p_lr_list[0]
+                num_corners_found = num_corners_found + 1
                 for b in p_lr_list:
                     if b[2] == c_lr:
                         p_lr = b
@@ -247,15 +256,98 @@ class GenerateFinalDetections():
             tempLL = None
             tempLR = None
             
-            if (p_ul is None and p_ur is not None and p_ll is not None):
-                tempUL = (p_ll[0], p_ur[1])
-            if (p_ur is None and p_ul is not None and p_lr is not None):
-                tempUR = (p_lr[0], p_ul[1])
-            if (p_ll is None and p_ul is not None and p_lr is not None):
-                tempLL = (p_ul[0], p_lr[1])
-            if (p_lr is None and p_ur is not None and p_ll is not None):
-                tempLR = (p_ur[0], p_ll[1])
-                
+            if num_corners_found == 3:            
+                if (p_ul is None and p_ur is not None and p_ll is not None):
+                    tempUL = (p_ll[0], p_ur[1])
+                if (p_ur is None and p_ul is not None and p_lr is not None):
+                    tempUR = (p_lr[0], p_ul[1])
+                if (p_ll is None and p_ul is not None and p_lr is not None):
+                    tempLL = (p_ul[0], p_lr[1])
+                if (p_lr is None and p_ur is not None and p_ll is not None):
+                    tempLR = (p_ur[0], p_ll[1])
+            elif num_corners_found == 2:
+                # Are the diagonal, horizontal, or vertical?
+                xmin = 10000
+                xmax = -1
+                ymin = 10000
+                ymax = -1
+
+                if p_ul is not None:
+                    if p_ul[0] < xmin:
+                        xmin = p_ul[0]
+                    if p_ul[0] > xmax:
+                        xmax = p_ul[0]
+                    if p_ul[1] < ymin:
+                        ymin = p_ul[1]
+                    if p_ul[1] > ymax:
+                        ymax = p_ul[1]
+
+                if p_ur is not None:
+                    if p_ur[0] < xmin:
+                        xmin = p_ur[0]
+                    if p_ur[0] > xmax:
+                        xmax = p_ur[0]
+                    if p_ur[1] < ymin:
+                        ymin = p_ur[1]
+                    if p_ur[1] > ymax:
+                        ymax = p_ur[1]
+
+                if p_ll is not None:
+                    if p_ll[0] < xmin:
+                        xmin = p_ll[0]
+                    if p_ll[0] > xmax:
+                        xmax = p_ll[0]
+                    if p_ll[1] < ymin:
+                        ymin = p_ll[1]
+                    if p_ll[1] > ymax:
+                        ymax = p_ll[1]
+
+                if p_lr is not None:
+                    if p_lr[0] < xmin:
+                        xmin = p_lr[0]
+                    if p_lr[0] > xmax:
+                        xmax = p_lr[0]
+                    if p_lr[1] < ymin:
+                        ymin = p_lr[1]
+                    if p_lr[1] > ymax:
+                        ymax = p_lr[1]
+
+                dx = xmax-xmin
+                dy = ymax-ymin
+				
+                # Handle horizontal:
+                if p_ul is not None and p_ll is not None:
+                    print("Got a special case: two corners, vertical, left")
+                    self.inspect = True
+                    p_ur = (p_ul[0] + 2*(gate_center_x - p_ul[0]), p_ul[1])
+                    p_lr = (p_ll[0] + 2*(gate_center_x - p_ll[0]), p_ll[1])
+                elif p_ur is not None and p_lr is not None:
+                    print("Got a special case: two corners, vertical, right")
+                    p_ul = (p_ur[0] - 2*(p_ur[0] - gate_center_x), p_ur[1])
+                    p_ll = (p_lr[0] - 2*(p_lr[0] - gate_center_x), p_lr[1])
+                    self.inspect = True
+                elif p_ul is not None and p_ur is not None:
+                    print("Got a special case: two corners, horizontal, top")
+                    p_ll = (p_ul[0], p_ul[1] + 2*(gate_center_y - p_ul[1]))
+                    p_lr = (p_ur[0], p_ur[1] + 2*(gate_center_y - p_ur[1]))                    
+                    self.inspect = True
+                elif p_ll is not None and p_lr is not None:
+                    print("Got a special case: two corners, horizontal, bottom")
+                    p_ul = (p_ll[0], p_ll[1] - 2*(p_ll[1] - gate_center_y))
+                    p_ur = (p_lr[0], p_lr[1] - 2*(p_lr[1] - gate_center_y))
+                    self.inspect = True
+                else:
+                    print("Got a special case: two corners, diagonal")
+                    self.inspect = True
+                    if (p_ul is None and p_ur is not None and p_ll is not None):
+                        tempUL = (p_ll[0], p_ur[1])
+                    if (p_ur is None and p_ul is not None and p_lr is not None):
+                        tempUR = (p_lr[0], p_ul[1])
+                    if (p_ll is None and p_ul is not None and p_lr is not None):
+                        tempLL = (p_ul[0], p_lr[1])
+                    if (p_lr is None and p_ur is not None and p_ll is not None):
+                        tempLR = (p_ur[0], p_ll[1]) 
+ 
             if tempUL is not None:
                 p_ul = tempUL
                 print("  Filling in UL!")
@@ -274,22 +366,19 @@ class GenerateFinalDetections():
         #xc = imWidth/2
         #yc = imHeight/2
         
-        if p_ul != None:
-            cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
-        else:
+        if p_ul is None:
             p_ul = (gate_center_x, gate_center_y)
-        if p_ur != None:
-            cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
-        else:
+        if p_ur is None:
             p_ur = (gate_center_x, gate_center_y)
-        if p_ll != None:
-            cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
-        else:
+        if p_ll is None:
             p_ll = (gate_center_x, gate_center_y)
-        if p_lr != None:
-            cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
-        else:
+        if p_lr is None:
             p_lr = (gate_center_x, gate_center_y)
+        
+        cv2.circle(image, (int(p_ul[0]), int(p_ul[1])), 3, (255, 0, 0), 4)
+        cv2.circle(image, (int(p_ur[0]), int(p_ur[1])), 3, (255, 0, 0), 4)
+        cv2.circle(image, (int(p_ll[0]), int(p_ll[1])), 3, (255, 0, 0), 4)
+        cv2.circle(image, (int(p_lr[0]), int(p_lr[1])), 3, (255, 0, 0), 4)
             
         # Draw Lines connecting the points:
         cv2.line(image, (int(p_ul[0]), int(p_ul[1])), (int(p_ur[0]), int(p_ur[1])), (0, 255, 255), 4)

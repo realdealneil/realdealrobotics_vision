@@ -12,7 +12,20 @@ import time
 
 img_file = glob.glob('../testing/images/*.JPG')
 img_keys = [img_i.split('/')[-1] for img_i in img_file]
-
+# img_keys = []
+# img_keys.append("IMG_4753.JPG")
+# img_keys.append("IMG_5493.JPG")
+# img_keys.append("IMG_6199.JPG")
+# img_keys.append("IMG_6738.JPG")
+# img_keys.append("IMG_6945.JPG")
+# img_keys.append("IMG_6957.JPG")
+# img_keys.append("IMG_6960.JPG")
+# img_keys.append("IMG_6971.JPG")
+# img_keys.append("IMG_6981.JPG")
+# img_keys.append("IMG_7770.JPG")
+# img_keys.append("IMG_8052.JPG")
+# img_keys.append("IMG_8136.JPG")
+# img_keys.append("IMG_8639.JPG")
 
 
 # Instantiate a new detector
