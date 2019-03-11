@@ -53,7 +53,8 @@ for img_key in img_keys:
 	if saveImages:
 		cv2.imwrite(output_path + "out_" + img_key, img)
 	if (finalDetector.inspect):
-		key = cv2.waitKey(0)
+		#key = cv2.waitKey(0)
+		key = cv2.waitKey(15)
 		finalDetector.inspect = False
 	else:
 		key = cv2.waitKey(15)
