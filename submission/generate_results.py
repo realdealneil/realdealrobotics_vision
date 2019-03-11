@@ -347,6 +347,29 @@ class GenerateFinalDetections():
                         tempLL = (p_ul[0], p_lr[1])
                     if (p_lr is None and p_ur is not None and p_ll is not None):
                         tempLR = (p_ur[0], p_ll[1]) 
+            elif num_corners_found == 1:
+                # Predict a box centered in the overall gate area:
+                self.inspect = True
+                if p_ul is not None:
+                    print("Single corner found: Upper left")
+                    p_ur = (p_ul[0] + 2*(gate_center_x - p_ul[0]), p_ul[1])
+                    p_ll = (p_ul[0], p_ul[1] + 2*(gate_center_y - p_ul[1]))
+                    p_lr = (p_ur[0], p_ll[1])
+                elif p_ur is not None:
+                    print("Single corner found: Upper right")
+                    p_ul = (p_ur[0] - 2*(p_ur[0] - gate_center_x), p_ur[1])
+                    p_lr = (p_ur[0], p_ur[1] + 2*(gate_center_y - p_ur[1])) 
+                    p_ll = (p_ul[0], p_lr[1])
+                elif p_ll is not None:
+                    print("Single corner found: Lower left")
+                    p_lr = (p_ll[0] + 2*(gate_center_x - p_ll[0]), p_ll[1])
+                    p_ul = (p_ll[0], p_ll[1] - 2*(p_ll[1] - gate_center_y))
+                    p_ur = (p_lr[0], p_ul[1]);                    
+                elif p_lr is not None:
+                    print("Single corner found: Lower right")
+                    p_ll = (p_lr[0] - 2*(p_lr[0] - gate_center_x), p_lr[1])
+                    p_ur = (p_lr[0], p_lr[1] - 2*(p_lr[1] - gate_center_y))
+                    p_ul = (p_ll[0], p_ur[1])
  
             if tempUL is not None:
                 p_ul = tempUL
